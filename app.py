@@ -40,12 +40,46 @@ MAX_DAYS = 120
 
 try:
     API_KEY = st.secrets["FOXESS_API_KEY"]
+    APP_PASSWORD = st.secrets["APP_PASSWORD"]
 except Exception:
-    st.error(
-        "FOXESS_API_KEY is not configured. "
-        "Add it to .streamlit/secrets.toml locally, "
-        "or to Streamlit Cloud Secrets after deployment."
-    )
+    st.error("FOXESS_API_KEY or APP_PASSWORD is not configured in Streamlit Secrets.")
+    st.stop()
+
+
+# ============================================================
+# PASSWORD ACCESS
+# ============================================================
+
+def check_password():
+    if st.session_state.get("authenticated", False):
+        return True
+
+    st.title("⚡ FoxESS Data Checker")
+    st.caption("ASB Internal Tool")
+
+    with st.form("login_form"):
+        password = st.text_input(
+            "Access Password",
+            type="password",
+            placeholder="Enter internal access password"
+        )
+        submitted = st.form_submit_button(
+            "Login",
+            type="primary",
+            use_container_width=True
+        )
+
+    if submitted:
+        if password == APP_PASSWORD:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+
+    return False
+
+
+if not check_password():
     st.stop()
 
 
@@ -533,6 +567,12 @@ st.markdown(
 # ============================================================
 # HEADER
 # ============================================================
+
+top_left, top_right = st.columns([5, 1])
+with top_right:
+    if st.button("Logout"):
+        st.session_state["authenticated"] = False
+        st.rerun()
 
 st.title("⚡ FoxESS Data Checker")
 
